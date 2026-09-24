@@ -1,5 +1,6 @@
 import { STYLES, extractSeeds } from './palette.js';
 import { DEFAULT_SETTINGS } from './defaults.js';
+import { ICON_STYLES, loadLibrary, matchSlug, searchLibrary, drawIcon } from './icons.js';
 
 const dock = document.getElementById('dock');
 const clockH = document.getElementById('clockH');
@@ -9,6 +10,11 @@ const clockDate = document.getElementById('clockDate');
 const addPanel = document.getElementById('addPanel');
 const addName = document.getElementById('addName');
 const addUrl = document.getElementById('addUrl');
+const addTitle = document.getElementById('addTitle');
+const addPreview = document.getElementById('addPreview');
+const addIconLabel = document.getElementById('addIconLabel');
+const iconSearch = document.getElementById('iconSearch');
+const iconResults = document.getElementById('iconResults');
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -18,99 +24,6 @@ function ordinal(n) {
   if (n % 10 === 2 && n % 100 !== 12) return n + 'nd';
   if (n % 10 === 3 && n % 100 !== 13) return n + 'rd';
   return n + 'th';
-}
-
-// Hand-picked high-res icons for sites where the live fetch chain below
-// falls short (wrong style, or the site just doesn't serve a good one at a
-// guessable path). Add more here as needed: drop a PNG in icons/apps/ and
-// add a matching hostname keyword.
-const CURATED_ICONS = {
-  whatsapp: 'icons/apps/whatsapp.png',
-  youtube: 'icons/apps/youtube.png',
-};
-
-function curatedIcon(pageUrl) {
-  const host = new URL(pageUrl).hostname;
-  for (const [keyword, path] of Object.entries(CURATED_ICONS)) {
-    if (host.includes(keyword)) return chrome.runtime.getURL(path);
-  }
-  return null;
-}
-
-function iconCandidates(pageUrl) {
-  const curated = curatedIcon(pageUrl);
-  if (curated) return [curated];
-
-  // High-res icons straight from the site itself, no third party involved.
-  // apple-touch-icon is the closest thing to a standard "app icon" format:
-  // square, high-res, deliberately designed -- exactly the iOS look asked for.
-  const origin = new URL(pageUrl).origin;
-  return [
-    `${origin}/apple-touch-icon.png`,
-    `${origin}/apple-touch-icon-precomposed.png`,
-    `${origin}/favicon.ico`,
-  ];
-}
-
-// Many sites send no-cache/short-lived headers on favicons, so leaving this
-// to the browser's own HTTP cache means a fresh network fetch (and a visible
-// icon pop-in) on every single new tab. Resolve the icon once, store it as a
-// data URL in extension storage, and skip the network entirely after that.
-const ICON_CACHE_TTL = 1000 * 60 * 60 * 24 * 30; // 30 days
-
-async function getIconCache() {
-  const { iconCache } = await chrome.storage.local.get('iconCache');
-  return iconCache || {};
-}
-
-function blobToDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function resolveIconDataUrl(candidates) {
-  for (const url of candidates) {
-    if (url.startsWith('chrome-extension://')) return url; // bundled asset, not fetched
-    try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const blob = await res.blob();
-      if (!blob.size) continue;
-      return await blobToDataUrl(blob);
-    } catch (e) {
-      continue;
-    }
-  }
-  return null;
-}
-
-async function loadBestIcon(img, letter, pageUrl) {
-  const host = new URL(pageUrl).hostname;
-  const cache = await getIconCache();
-  const cached = cache[host];
-
-  if (cached && Date.now() - cached.ts < ICON_CACHE_TTL) {
-    img.onerror = () => img.remove();
-    img.onload = () => letter.remove();
-    img.src = cached.dataUrl;
-    return;
-  }
-
-  const dataUrl = await resolveIconDataUrl(iconCandidates(pageUrl));
-  if (!dataUrl) {
-    img.remove();
-    return;
-  }
-  img.onerror = () => img.remove();
-  img.onload = () => letter.remove();
-  img.src = dataUrl;
-
-  cache[host] = { dataUrl, ts: Date.now() };
-  await chrome.storage.local.set({ iconCache: cache });
 }
 
 let lastDate = null;
@@ -144,21 +57,48 @@ async function saveLinks(links) {
   await chrome.storage.local.set({ links });
 }
 
+// A link's `icon` is 'auto' (match by domain), 'site' (always the site's own icon)
+// or a library slug; `glyph` caches the resolved library entry so a new tab never
+// has to load the whole library.
+function resolveGlyph(link, lib) {
+  const choice = link.icon || 'auto';
+  if (choice === 'site') return null;
+  const slug = choice === 'auto' ? matchSlug(link.url, lib) : choice;
+  return (slug && lib.bySlug.get(slug)) || null;
+}
+
+async function ensureGlyphs(links) {
+  if (links.every((l) => 'glyph' in l)) return false;
+  const lib = await loadLibrary();
+  for (const l of links) if (!('glyph' in l)) l.glyph = resolveGlyph(l, lib);
+  await saveLinks(links);
+  return true;
+}
+
+function iconStyle() {
+  return settings.iconStyle || DEFAULT_SETTINGS.iconStyle;
+}
+
 function makeDockItem(link, index) {
   const a = document.createElement('a');
-  a.className = 'dock-item';
+  a.className = 'dock-item icon-' + iconStyle();
   a.href = link.url;
   a.dataset.name = link.name;
 
-  const letter = document.createElement('div');
-  letter.className = 'letter';
-  letter.textContent = link.name.trim().charAt(0) || '?';
-  a.appendChild(letter);
+  const tile = document.createElement('div');
+  drawIcon(tile, link, iconStyle());
+  a.appendChild(tile);
 
-  const icon = document.createElement('img');
-  icon.alt = '';
-  a.appendChild(icon);
-  loadBestIcon(icon, letter, link.url);
+  const edit = document.createElement('button');
+  edit.className = 'edit';
+  edit.textContent = '✎';
+  edit.title = 'Edit';
+  edit.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openAddPanel(index);
+  });
+  a.appendChild(edit);
 
   const remove = document.createElement('button');
   remove.className = 'remove';
@@ -184,15 +124,60 @@ function makeAddItem() {
   plus.className = 'plus';
   plus.textContent = '+';
   div.appendChild(plus);
-  div.addEventListener('click', openAddPanel);
+  div.addEventListener('click', () => openAddPanel(-1));
   return div;
 }
 
-function openAddPanel() {
+// ---------------------------------------------------------------- add / edit
+
+let editIndex = -1;
+let draftIcon = 'auto';
+
+async function refreshAddPreview() {
+  const lib = await loadLibrary();
+  const draft = { name: addName.value || '?', url: normalizeUrl(addUrl.value || 'example.invalid'), icon: draftIcon };
+  draft.glyph = addUrl.value.trim() || draftIcon !== 'auto' ? resolveGlyph(draft, lib) : null;
+  addPreview.className = 'dock-item shortcut-preview icon-' + iconStyle();
+  addPreview.textContent = '';
+  const tile = document.createElement('div');
+  drawIcon(tile, draft, iconStyle());
+  addPreview.appendChild(tile);
+  addIconLabel.textContent = draftIcon === 'site' ? 'The site’s own icon'
+    : draftIcon !== 'auto' ? (draft.glyph ? draft.glyph[1] : 'Automatic')
+    : draft.glyph ? `Automatic: ${draft.glyph[1]}` : 'Automatic (no match yet, uses the site’s icon)';
+  document.querySelectorAll('#iconChoiceRow button').forEach((b) => b.classList.toggle('on', b.dataset.choice === draftIcon));
+}
+
+async function refreshIconResults() {
+  const lib = await loadLibrary();
+  const found = searchLibrary(lib, iconSearch.value);
+  iconResults.textContent = '';
+  for (const entry of found) {
+    const b = document.createElement('button');
+    b.className = 'icon-result icon-' + iconStyle() + (draftIcon === entry[0] ? ' on' : '');
+    b.title = entry[1];
+    const tile = document.createElement('div');
+    drawIcon(tile, { name: entry[1], url: 'https://example.invalid', glyph: entry }, iconStyle() === 'site' ? 'brand' : iconStyle());
+    b.appendChild(tile);
+    b.addEventListener('click', () => { draftIcon = entry[0]; refreshAddPreview(); refreshIconResults(); });
+    iconResults.appendChild(b);
+  }
+  iconResults.hidden = !found.length;
+}
+
+async function openAddPanel(index) {
+  editIndex = index;
+  const link = index >= 0 ? (await getLinks())[index] : null;
+  addTitle.textContent = link ? 'Edit shortcut' : 'Add a shortcut';
+  document.getElementById('addSave').textContent = link ? 'Save' : 'Add';
+  addName.value = link ? link.name : '';
+  addUrl.value = link ? link.url : '';
+  draftIcon = link ? link.icon || 'auto' : 'auto';
+  iconSearch.value = '';
+  iconResults.hidden = true;
   addPanel.hidden = false;
-  addName.value = '';
-  addUrl.value = '';
   addName.focus();
+  refreshAddPreview();
 }
 
 function closeAddPanel() {
@@ -203,8 +188,12 @@ async function submitAdd() {
   const name = addName.value.trim();
   const url = addUrl.value.trim();
   if (!name || !url) return;
+  const lib = await loadLibrary();
   const links = await getLinks();
-  links.push({ name, url: normalizeUrl(url) });
+  const link = { name, url: normalizeUrl(url), icon: draftIcon };
+  link.glyph = resolveGlyph(link, lib);
+  if (editIndex >= 0) links[editIndex] = link;
+  else links.push(link);
   await saveLinks(links);
   closeAddPanel();
   render();
@@ -212,6 +201,7 @@ async function submitAdd() {
 
 async function render() {
   const links = await getLinks();
+  if (await ensureGlyphs(links)) return render();
   dock.innerHTML = '';
   links.forEach((link, i) => dock.appendChild(makeDockItem(link, i)));
   if (links.length) {
@@ -225,16 +215,26 @@ async function render() {
 document.getElementById('addCancel').addEventListener('click', closeAddPanel);
 document.getElementById('addSave').addEventListener('click', submitAdd);
 addPanel.addEventListener('click', (e) => { if (e.target === addPanel) closeAddPanel(); });
-[addName, addUrl].forEach((input) => {
+[addName, addUrl, iconSearch].forEach((input) => {
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') submitAdd();
+    if (e.key === 'Enter' && input !== iconSearch) submitAdd();
     if (e.key === 'Escape') closeAddPanel();
   });
 });
+let previewTimer = null;
+[addName, addUrl].forEach((input) => input.addEventListener('input', () => {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(refreshAddPreview, 250);
+}));
+iconSearch.addEventListener('input', refreshIconResults);
+document.querySelectorAll('#iconChoiceRow button').forEach((b) => b.addEventListener('click', () => {
+  draftIcon = b.dataset.choice;
+  refreshAddPreview();
+  refreshIconResults();
+}));
 
 tickClock();
 setInterval(tickClock, 1000);
-render();
 
 // ---------------------------------------------------------------- colours
 
@@ -313,6 +313,7 @@ function renderSettings() {
     ? (wp ? `Following your ${wp.source === 'lively' ? 'Lively' : 'Windows'} wallpaper: ${wp.title}` : 'Connected, waiting for the wallpaper…')
     : 'The Windows helper isn’t running, so the wallpaper can’t be read. Run Install.bat from the Quiet Tab folder, then reopen this tab.';
   $('wpStatus').classList.toggle('warn', !connected);
+  renderIconStyles();
   const wpBox = $('wpSwatches');
   wpBox.innerHTML = '';
   const seeds = (wp && wp.seeds) || [];
@@ -339,6 +340,47 @@ function renderSettings() {
   });
   if (settings.imagePick && !settings.imageSeeds.includes(settings.imagePick)) {
     imgBox.appendChild(swatch(settings.imagePick, true, () => {}));
+  }
+}
+
+// Six sample shortcuts for the style previews when the dock is still empty.
+const SAMPLE_LINKS = ['github.com', 'youtube.com', 'spotify.com', 'web.whatsapp.com', 'reddit.com', 'netflix.com']
+  .map((d) => ({ name: d, url: 'https://' + d, icon: 'auto' }));
+let iconStylesKey = null;
+
+async function renderIconStyles() {
+  const links = (await getLinks()).slice(0, 6);
+  const key = JSON.stringify([settings.iconStyle, links.map((l) => [l.url, l.glyph && l.glyph[0]])]);
+  if (key === iconStylesKey) return;
+  iconStylesKey = key;
+  let preview = links;
+  if (!preview.length) {
+    const lib = await loadLibrary();
+    preview = SAMPLE_LINKS.map((l) => ({ ...l, glyph: lib.bySlug.get(matchSlug(l.url, lib)) || null }));
+  }
+  const box = $('iconStyles');
+  box.textContent = '';
+  for (const style of ICON_STYLES) {
+    const opt = document.createElement('button');
+    opt.className = 'icon-style' + (style.id === settings.iconStyle ? ' on' : '');
+    const head = document.createElement('div');
+    head.className = 'icon-style-head';
+    head.innerHTML = '<b></b><span></span>';
+    head.querySelector('b').textContent = style.label;
+    head.querySelector('span').textContent = style.hint;
+    const row = document.createElement('div');
+    row.className = 'mini-dock';
+    for (const link of preview) {
+      const item = document.createElement('div');
+      item.className = 'dock-item mini icon-' + style.id;
+      const tile = document.createElement('div');
+      drawIcon(tile, link, style.id);
+      item.appendChild(tile);
+      row.appendChild(item);
+    }
+    opt.append(head, row);
+    opt.addEventListener('click', () => saveSettings({ iconStyle: style.id }));
+    box.appendChild(opt);
   }
 }
 
@@ -400,6 +442,7 @@ async function loadState() {
   state = got;
   applyPalette();
   renderSettings();
+  render();
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -407,6 +450,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
   for (const k of ['palette', 'wallpaper', 'host']) if (changes[k]) state[k] = changes[k].newValue;
   if (changes.settings) settings = { ...DEFAULT_SETTINGS, ...(changes.settings.newValue || {}) };
   if (changes.palette || changes.settings) applyPalette();
+  const oldStyle = changes.settings && changes.settings.oldValue && changes.settings.oldValue.iconStyle;
+  if (changes.links || (changes.settings && oldStyle !== settings.iconStyle)) render();
   renderSettings();
 });
 

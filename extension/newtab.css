@@ -118,27 +118,38 @@ main {
   background: var(--surface);
 }
 
-.dock-item .letter {
-  width: 100%;
-  height: 100%;
-  border-radius: 15px;
-  background: var(--primary);
-  color: var(--on-primary);
+/* ---- icon tiles (see icons.js for the styles) ---- */
+
+.dock-item { font-size: 52px; }
+
+.tile {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 17px;
-  text-transform: uppercase;
+  overflow: hidden;
 }
 
-.dock-item img {
-  width: 100%;
-  height: 100%;
-  border-radius: 15px;
-  object-fit: cover;
-  image-rendering: -webkit-optimize-contrast;
-}
+.tile svg { width: 52%; height: 52%; fill: currentColor; }
+.tile img { width: 100%; height: 100%; object-fit: cover; image-rendering: -webkit-optimize-contrast; }
+.tile-letter { font-size: 0.33em; font-weight: 700; text-transform: uppercase; }
+
+.tile.is-site { background: var(--primary); color: var(--on-primary); }
+/* Transparent favicons sit on white, the way phones show app icons. */
+.tile.is-site.has-img { background: #fff; }
+.style-brand { background: var(--brand, var(--primary)); color: var(--brand-fg, var(--on-primary)); }
+.style-themed { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); color: var(--primary); }
+.style-accent { background: var(--primary); color: var(--on-primary); }
+.style-mono { background: var(--surface-variant); color: var(--on-surface); }
+.style-glyph { background: transparent; color: var(--brand, var(--primary)); }
+.style-glyph svg { width: 68%; height: 68%; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); }
+[data-scheme="dark"] .style-glyph.brand-dark,
+[data-scheme="light"] .style-glyph.brand-light { color: var(--on-surface); }
+
+.dock-item.icon-glyph { background: transparent; box-shadow: none; }
+.dock-item.icon-glyph:hover { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
 
 .dock-item .remove {
   position: absolute;
@@ -157,9 +168,31 @@ main {
   justify-content: center;
 }
 
-.dock-item:hover .remove { display: flex; }
+.dock-item:hover .remove, .dock-item:hover .edit { display: flex; }
 
-.dock-item::after {
+.dock-item .edit {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-variant);
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.dock-item .remove { z-index: 1; padding: 0; cursor: pointer; }
+
+.dock-item[data-name]::after {
   content: attr(data-name);
   position: absolute;
   bottom: 58px;
@@ -177,7 +210,7 @@ main {
   transition: opacity 0.12s ease;
 }
 
-.dock-item:hover::after {
+.dock-item[data-name]:hover::after {
   opacity: 0.95;
 }
 
@@ -225,13 +258,17 @@ main {
   border: 1px solid color-mix(in srgb, var(--outline-variant) 70%, transparent);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   border-radius: 16px;
-  padding: 24px;
+  padding: 22px;
+  width: 400px;
+  max-width: calc(100vw - 32px);
 }
+
+.add-card h2 { margin: 0 0 14px; font-size: 17px; }
 
 .add-panel input {
   display: block;
-  width: 260px;
-  margin: 0 auto 10px;
+  width: 100%;
+  margin: 0 0 10px;
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--outline-variant);
@@ -472,3 +509,76 @@ main {
 
 [data-scheme="light"] .dock { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12); }
 [data-scheme="light"] .settings { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16); }
+
+/* ---- icon picking ---- */
+
+.icon-styles { display: flex; flex-direction: column; gap: 8px; }
+
+.icon-style {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--outline-variant);
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  cursor: pointer;
+}
+
+.icon-style:hover { border-color: color-mix(in srgb, var(--primary) 60%, var(--outline-variant)); }
+.icon-style.on { border: 2px solid var(--primary); padding: 9px 11px; background: color-mix(in srgb, var(--primary) 9%, transparent); }
+.icon-style-head b { font-size: 13px; }
+.icon-style-head span { font-size: 11px; color: var(--on-surface-variant); margin-left: 6px; }
+
+.mini-dock { display: flex; gap: 7px; margin-top: 9px; }
+
+.dock-item.mini, .dock-item.shortcut-preview {
+  flex: none;
+  cursor: inherit;
+  transform: none !important;
+  box-shadow: none;
+}
+
+.dock-item.mini { width: 32px; height: 32px; border-radius: 9px; font-size: 32px; }
+.dock-item.shortcut-preview { width: 52px; height: 52px; }
+
+.icon-pick {
+  margin: 4px 0 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-variant) 45%, transparent);
+}
+
+.icon-pick-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.icon-pick-head .label { margin: 0 0 2px; }
+.icon-pick-head .hint { margin: 0; }
+.icon-pick .seg { margin-bottom: 10px; }
+.add-panel .icon-pick input { margin: 0; }
+
+.icon-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 42px);
+  gap: 8px;
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline-variant) transparent;
+}
+
+.icon-results[hidden] { display: none; }
+
+.icon-result {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: none;
+  padding: 0;
+  font-size: 42px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.icon-result:hover { transform: scale(1.08); }
+.icon-result.on { outline: 2px solid var(--on-surface); outline-offset: 2px; }

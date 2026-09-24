@@ -1,2 +1,3 @@
 helper/*.exe
 *.old
+node_modules/

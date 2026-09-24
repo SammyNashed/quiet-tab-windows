@@ -77,6 +77,11 @@
       </div>
     </div>
 
+    <div class="field">
+      <span class="label">Icon style</span>
+      <div class="icon-styles" id="iconStyles"></div>
+    </div>
+
     <div class="field browser-theme">
       <span class="label">Your browser's colours</span>
       <p class="hint">Your browser keeps its own theme. To match it, pick one of its colours under Settings → Appearance.</p>
@@ -88,8 +93,26 @@
 
   <div class="add-panel" id="addPanel" hidden>
     <div class="add-card">
+      <h2 id="addTitle">Add a shortcut</h2>
       <input id="addName" type="text" placeholder="Name" autocomplete="off" maxlength="24">
-      <input id="addUrl" type="text" placeholder="URL" autocomplete="off">
+      <input id="addUrl" type="text" placeholder="Address, e.g. github.com" autocomplete="off">
+
+      <div class="icon-pick">
+        <div class="icon-pick-head">
+          <div class="dock-item shortcut-preview" id="addPreview"></div>
+          <div>
+            <div class="label">Icon</div>
+            <div class="hint" id="addIconLabel">Automatic</div>
+          </div>
+        </div>
+        <div class="seg small" id="iconChoiceRow">
+          <button data-choice="auto">Automatic</button>
+          <button data-choice="site">Site's own icon</button>
+        </div>
+        <input id="iconSearch" type="text" placeholder="Or search 3,400+ icons…" autocomplete="off">
+        <div class="icon-results" id="iconResults" hidden></div>
+      </div>
+
       <div class="add-actions">
         <button id="addCancel">Cancel</button>
         <button id="addSave">Add</button>

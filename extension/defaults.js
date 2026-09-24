@@ -9,5 +9,6 @@ export const DEFAULT_SETTINGS = {
   imagePick: null,
   style: 'vibrant',
   mode: 'dark',          // 'dark' | 'light' | 'system'
+  iconStyle: 'brand',    // see ICON_STYLES in icons.js
 };
 

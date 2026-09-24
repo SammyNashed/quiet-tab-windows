@@ -15,16 +15,35 @@ on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows ve
 - **Nine Material You styles**, using the same colour engine as matugen: Tonal spot, Vibrant, Expressive, Fidelity,
   Content, Rainbow, Fruit salad, Neutral and Monochrome. There's also *Exact colour* for when you want your colour
   unsoftened, and dark, light or follow-the-system modes.
-- **Your own shortcuts** in a dock, with each site's own high-res icon. No tracking and no "most visited".
+- **Your own shortcuts, with 3,400+ bundled icons in six styles.** Pick how the whole dock looks: *Site icons*,
+  *Brand colour*, *Themed* (tinted to your wallpaper), *Accent*, *Monochrome* or *Logo only*. Each style shows a live
+  preview of your own shortcuts. Icons are matched to each shortcut automatically, or you can search the library and
+  choose one yourself. No tracking and no "most visited".
 
 | | |
 |---|---|
 | <img src="screenshots/orange-tonal-spot.png" alt="Orange nebula, Tonal spot"> | <img src="screenshots/blue-fidelity.png" alt="Blue nebula, Fidelity"> |
-| Carina Nebula · *Tonal spot* | Pillars of Creation · *Fidelity* |
+| Carina Nebula · *Tonal spot* · Brand colour icons | Pillars of Creation · *Fidelity* · Themed icons |
 | <img src="screenshots/green-vibrant-light.png" alt="Green aurora, Vibrant, light mode"> | <img src="screenshots/red-content.png" alt="Red aurora, Content"> |
-| Aurora from orbit, second swatch picked · *Vibrant*, light mode | Red aurora · *Content* |
+| Aurora from orbit, second swatch picked · *Vibrant*, light · Logo only | Red aurora · *Content* · Accent icons |
 | <img src="screenshots/image-expressive.png" alt="Uploaded picture, Expressive"> | <img src="screenshots/custom-exact.png" alt="Custom colour, Exact"> |
-| An uploaded picture (Crab Nebula) · *Expressive* | Custom colour · *Exact colour* |
+| An uploaded picture (Crab Nebula) · *Expressive* · Monochrome icons | Custom colour · *Exact colour* · Site icons |
+
+## Shortcut icons
+
+<p>
+  <img src="screenshots/icon-styles.png" width="44%" alt="The icon style picker with live previews">
+  <img src="screenshots/add-shortcut.png" width="44%" alt="Adding a shortcut and searching the icon library">
+</p>
+
+- The extension ships with the whole [Simple Icons](https://simpleicons.org) set: 3,400+ brand logos, each with its
+  official colour.
+- Pick a style under **Icon style** in the colour panel; every option previews your own shortcuts.
+- Adding a shortcut (**+**) or editing one (the **✎** that appears on hover) shows its icon straight away. You can keep
+  *Automatic* (matched from the address, for example `mail.google.com` → Gmail and `drive.google.com` → Google Drive),
+  use *Site's own icon*, or search the library and pick any logo.
+- A few big brands don't allow their logos in Simple Icons (Microsoft, Amazon, LinkedIn, OpenAI, Slack). Those use the
+  site's own icon in *Brand colour*, and a lettered tile in the other styles, unless you pick something else.
 
 ## Install
 
@@ -67,6 +86,7 @@ They follow the four install steps above. Things worth telling them:
 | Piece | What it does |
 |---|---|
 | `extension/` | The New Tab page, plus a background worker that turns the colour source into a palette. |
+| `extension/icons.js` + `extension/icons/library.json` | The icon library (built from Simple Icons by `tools/build-icon-library.mjs`), domain matching, and the six icon styles. The 4.7 MB library is only read when adding or matching a shortcut; each shortcut keeps its own icon, so a new tab never loads it. |
 | `extension/palette.js` | Wallpaper → seed colours (Celebi quantizer + Score, as in matugen; near-black and near-grey swatches are dropped) → Material You scheme. |
 | `helper/QuietTabHelper.cs` | A [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host that the browser starts on demand. It finds the current wallpaper (Lively's active wallpaper, falling back to the Windows desktop picture or solid colour) and sends a small thumbnail whenever it changes. |
 
@@ -80,7 +100,9 @@ Helium 0.18.
   (Apache 2.0), bundled as `extension/vendor/mcu.js`.
 - Screenshot wallpapers: public-domain images from the [NASA Image and Video Library](https://images.nasa.gov)
   (`carina_nebula`, `GSFC_20171208_Archive_e000842`, `iss023e058455`, `KSC-20251111-PH-JBS01_0011`, `PIA03606`).
-- The two curated shortcut icons in `extension/icons/apps/` come from third-party icon packs, as in the Linux version.
+- Shortcut icons: [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0), bundled as
+  `extension/icons/library.json`. The logos are trademarks of their owners and are shown only to identify each site.
+- The two curated *Site icons* in `extension/icons/apps/` come from third-party icon packs, as in the Linux version.
 
 ## License
 
