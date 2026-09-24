@@ -305,7 +305,6 @@ function renderSettings() {
   document.querySelectorAll('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === settings.mode));
   document.querySelectorAll('[data-pane]').forEach((s) => { s.hidden = s.dataset.pane !== settings.source; });
   $('styleSelect').value = settings.style;
-  $('heliumSync').checked = settings.heliumSync;
   $('seedChip').style.background = seed;
   $('seedHex').textContent = seed;
 
@@ -401,14 +400,11 @@ function setupSettings() {
     } catch (e) { /* cancelled */ }
   });
 
-  $('heliumSync').addEventListener('change', () => saveSettings({ heliumSync: $('heliumSync').checked }));
-  $('heliumNow').addEventListener('click', async () => {
-    const res = await chrome.runtime.sendMessage({ type: 'heliumApplyNow' });
-    const hint = $('heliumHint');
-    hint.classList.add('warn');
-    hint.textContent = res && res.ok
-      ? 'Ready. Now quit Helium: ⋮ menu → Exit. It reopens by itself in the new colour, with all your tabs.'
-      : 'The Windows helper isn’t installed, so Helium’s colour can’t be changed. Run Install.bat first.';
+  $('copySeed').addEventListener('click', async () => {
+    const hex = state.palette ? state.palette.seed : settings.custom;
+    await navigator.clipboard.writeText(hex);
+    $('copySeed').textContent = 'Copied ' + hex;
+    setTimeout(() => { $('copySeed').textContent = 'Copy colour'; }, 1800);
   });
 
   darkQuery.addEventListener('change', applyPalette);

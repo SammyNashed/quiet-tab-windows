@@ -7,12 +7,6 @@ import { buildPalette, extractSeeds } from './palette.js';
 import { DEFAULT_SETTINGS } from './defaults.js';
 
 const HOST = 'com.quiettab.helper';
-// Helium's toolbar colour variant (Chromium's BrowserColorVariant), matched to the
-// page style: 1 tonal spot, 2 neutral, 3 vibrant, 4 expressive. Verified on
-// Helium 0.18 for Windows -- 2 turns the toolbar grey there.
-const HELIUM_VARIANTS = { tonal_spot: 1, neutral: 2, monochrome: 2, expressive: 4 };
-const heliumVariant = (style) => HELIUM_VARIANTS[style] || 3;
-
 let port = null;
 
 async function getSettings() {
@@ -72,7 +66,7 @@ function pickSeed(settings, wallpaper) {
 
 async function recompute() {
   const settings = await getSettings();
-  const { wallpaper, heliumAccent } = await chrome.storage.local.get(['wallpaper', 'heliumAccent']);
+  const { wallpaper } = await chrome.storage.local.get('wallpaper');
   const seed = pickSeed(settings, wallpaper);
   const palette = {
     seed,
@@ -80,12 +74,6 @@ async function recompute() {
     light: buildPalette(seed, settings.style, false),
   };
   await chrome.storage.local.set({ palette });
-
-  const accentKey = seed + '/' + heliumVariant(settings.style);
-  if (settings.heliumSync && port && accentKey !== heliumAccent) {
-    port.postMessage({ type: 'accent', hex: seed, variant: heliumVariant(settings.style), restart: false });
-    await chrome.storage.local.set({ heliumAccent: accentKey });
-  }
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -97,18 +85,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
     connectHost();
     if (port) port.postMessage({ type: 'refresh' });
     reply({ ok: !!port });
-  }
-  if (msg.type === 'heliumApplyNow') {
-    connectHost();
-    if (!port) { reply({ ok: false }); return; }
-    getSettings().then(async (settings) => {
-      const { wallpaper } = await chrome.storage.local.get('wallpaper');
-      const seed = pickSeed(settings, wallpaper);
-      await chrome.storage.local.set({ heliumAccent: seed + '/' + heliumVariant(settings.style) });
-      port.postMessage({ type: 'accent', hex: seed, variant: heliumVariant(settings.style), restart: true });
-      reply({ ok: true });
-    });
-    return true;
   }
 });
 

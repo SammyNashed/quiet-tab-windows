@@ -9,6 +9,5 @@ export const DEFAULT_SETTINGS = {
   imagePick: null,
   style: 'vibrant',
   mode: 'dark',          // 'dark' | 'light' | 'system'
-  heliumSync: true,      // keep Helium's toolbar colour matching (applied when Helium next closes)
 };
 

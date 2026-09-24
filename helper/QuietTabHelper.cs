@@ -1,12 +1,10 @@
 // Quiet Tab helper for Windows.
 //
-// One small exe, four jobs:
+// One small exe, three jobs:
 //   (no args / chrome-extension://...)  native messaging host: tells the extension what the
 //                                        current desktop wallpaper looks like, and pushes an
 //                                        update whenever it changes (Lively or plain Windows).
 //   --install / --uninstall             register / unregister the native messaging host.
-//   --apply-accent [--restart]          detached worker: waits for Helium to close, writes the
-//                                        toolbar accent into its Preferences, optionally relaunches.
 //   --wallpaper                          debug: print what it thinks the wallpaper is.
 //
 // Built with the C# 5 compiler that ships with Windows (.NET Framework 4), see Install.bat.
@@ -20,7 +18,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -45,9 +42,7 @@ static class QuietTabHelper
 
     static readonly string LocalAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     static readonly string HeliumDir = Path.Combine(LocalAppData, @"imput\Helium");
-    static readonly string HeliumPrefs = Path.Combine(HeliumDir, @"User Data\Default\Preferences");
     static readonly string StateDir = Path.Combine(LocalAppData, "QuietTab");
-    static readonly string PendingAccentFile = Path.Combine(StateDir, "pending-accent.txt");
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
 
     [STAThread]
@@ -58,12 +53,6 @@ static class QuietTabHelper
             string first = args.Length > 0 ? args[0] : "";
             if (first == "--install") return Install();
             if (first == "--uninstall") return Uninstall();
-            if (first == "--apply-accent") return ApplyAccentWorker(args);
-            if (first == "--write-prefs" && args.Length >= 3) // debug: --write-prefs <Preferences> <hex> [variant]
-            {
-                WriteAccent(args[2], args.Length > 3 ? int.Parse(args[3]) : 3, args[1]);
-                return 0;
-            }
             if (first == "--wallpaper")
             {
                 var w = Wallpaper.Current();
@@ -97,7 +86,7 @@ static class QuietTabHelper
         string manifestPath = Path.Combine(Path.GetDirectoryName(exe), HostName + ".json");
         var manifest = new Dictionary<string, object> {
             { "name", HostName },
-            { "description", "Quiet Tab wallpaper + accent helper" },
+            { "description", "Quiet Tab wallpaper helper" },
             { "path", exe },
             { "type", "stdio" },
             { "allowed_origins", new[] { "chrome-extension://" + ExtensionId + "/" } },
@@ -120,128 +109,6 @@ static class QuietTabHelper
         }
         Console.WriteLine("Unregistered " + HostName);
         return 0;
-    }
-
-    // ------------------------------------------------------------------ accent
-
-    // Chromium stores the toolbar "user color" as a signed 32-bit SkColor.
-    static int HexToSkColor(string hex)
-    {
-        hex = hex.TrimStart('#');
-        uint rgb = Convert.ToUInt32(hex, 16);
-        return unchecked((int)(0xFF000000u | rgb));
-    }
-
-    // Queue an accent from the extension. The worker has to outlive Helium (it writes the
-    // prefs once Helium has shut down), so it is started through WMI, which puts it outside
-    // the browser's process tree and job object.
-    public static void QueueAccent(string hex, int variant, bool restart)
-    {
-        Directory.CreateDirectory(StateDir);
-        File.WriteAllText(PendingAccentFile, hex + " " + variant);
-        string exe = Process.GetCurrentProcess().MainModule.FileName;
-        string cmd = "\"" + exe + "\" --apply-accent" + (restart ? " --restart" : "");
-        using (var cls = new ManagementClass("Win32_Process"))
-        {
-            var inParams = cls.GetMethodParameters("Create");
-            inParams["CommandLine"] = cmd;
-            cls.InvokeMethod("Create", inParams, null);
-        }
-    }
-
-    static readonly string RestartFlag = Path.Combine(StateDir, "restart-requested");
-    static readonly TimeSpan RestartWindow = TimeSpan.FromMinutes(5);
-
-    // "Apply now" leaves a timestamped flag. It only counts while it is fresh, so a stale
-    // one can never turn a later, passive colour sync into a surprise relaunch.
-    static bool RestartRequested()
-    {
-        try
-        {
-            long ticks;
-            if (!File.Exists(RestartFlag) || !long.TryParse(File.ReadAllText(RestartFlag).Trim(), out ticks)) return false;
-            return DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) < RestartWindow;
-        }
-        catch { return false; }
-    }
-
-    static int ApplyAccentWorker(string[] args)
-    {
-        if (args.Contains("--restart")) File.WriteAllText(RestartFlag, DateTime.UtcNow.Ticks.ToString());
-        bool created;
-        // One worker at a time: a newer request just rewrites the pending file (and maybe the
-        // restart flag), and the worker that is already waiting picks it up.
-        using (var mutex = new Mutex(true, "QuietTabAccentWorker", out created))
-        {
-            if (!created) return 0;
-            try
-            {
-                // Passive: wait as long as it takes. After "Apply now" the user was asked to quit
-                // Helium; if they don't within the window, drop back to waiting passively.
-                while (HeliumProcesses().Count > 0) Thread.Sleep(400);
-                Thread.Sleep(600); // let the last writer flush Preferences
-
-                bool restart = RestartRequested();
-                try { File.Delete(RestartFlag); } catch { }
-                if (!File.Exists(PendingAccentFile) || !File.Exists(HeliumPrefs)) return 0;
-                string[] parts = File.ReadAllText(PendingAccentFile).Trim().Split(' ');
-                WriteAccent(parts[0], parts.Length > 1 ? int.Parse(parts[1]) : 3);
-                File.Delete(PendingAccentFile);
-
-                if (restart) RelaunchHelium();
-            }
-            finally { mutex.ReleaseMutex(); }
-        }
-        return 0;
-    }
-
-    static void WriteAccent(string hex, int variant, string prefsPath = null)
-    {
-        prefsPath = prefsPath ?? HeliumPrefs;
-        File.Copy(prefsPath, prefsPath + ".quiettab.bak", true);
-        var prefs = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(prefsPath));
-        var browser = Child(prefs, "browser");
-        var theme = Child(browser, "theme");
-        theme["user_color2"] = HexToSkColor(hex);
-        theme["color_variant2"] = variant;
-        theme["is_grayscale2"] = false;
-        theme["follows_system_colors"] = false;
-        File.WriteAllText(prefsPath, Json.Serialize(prefs), new UTF8Encoding(false));
-        Log("accent: wrote " + hex + " variant " + variant);
-    }
-
-    static Dictionary<string, object> Child(Dictionary<string, object> parent, string key)
-    {
-        object v;
-        if (parent.TryGetValue(key, out v) && v is Dictionary<string, object>) return (Dictionary<string, object>)v;
-        var d = new Dictionary<string, object>();
-        parent[key] = d;
-        return d;
-    }
-
-    static List<Process> HeliumProcesses()
-    {
-        var list = new List<Process>();
-        foreach (var p in Process.GetProcessesByName("chrome"))
-        {
-            try
-            {
-                if (p.MainModule.FileName.StartsWith(HeliumDir, StringComparison.OrdinalIgnoreCase)) list.Add(p);
-            }
-            catch { }
-        }
-        return list;
-    }
-
-    static void RelaunchHelium()
-    {
-        string exe = Path.Combine(HeliumDir, @"Application\chrome.exe");
-        if (!File.Exists(exe)) return;
-        var psi = new ProcessStartInfo(exe, "--restore-last-session") { UseShellExecute = false };
-        // Don't hand Claude Code / terminal session markers to the browser.
-        foreach (var k in psi.EnvironmentVariables.Keys.Cast<string>().ToList())
-            if (k.ToUpperInvariant().Contains("CLAUDE") || k == "NO_COLOR") psi.EnvironmentVariables.Remove(k);
-        Process.Start(psi);
     }
 
     // ------------------------------------------------------------------ messaging
@@ -310,15 +177,6 @@ static class QuietTabHelper
         {
             string type = msg.ContainsKey("type") ? (string)msg["type"] : "";
             if (type == "refresh") { wantResend = true; return; }
-            if (type == "accent")
-            {
-                string hex = (string)msg["hex"];
-                int variant = msg.ContainsKey("variant") ? Convert.ToInt32(msg["variant"]) : 3;
-                bool restart = msg.ContainsKey("restart") && (bool)msg["restart"];
-                if (!System.Text.RegularExpressions.Regex.IsMatch(hex, "^#[0-9a-fA-F]{6}$")) return;
-                QueueAccent(hex, variant, restart);
-                Send(new Dictionary<string, object> { { "type", "accentQueued" }, { "hex", hex }, { "restart", restart } });
-            }
         }
 
         static bool ReadExact(Stream s, byte[] buf, int n)

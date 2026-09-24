@@ -19,7 +19,7 @@ if (-not (Test-Path $csc)) { throw ".NET Framework 4 compiler not found (it ship
 
 New-Item -ItemType Directory -Force $dest | Out-Null
 $tmp = Join-Path $dest 'QuietTabHelper.new.exe'
-& $csc -nologo -optimize -target:exe "-out:$tmp" -r:System.Drawing.dll -r:System.Management.dll `
+& $csc -nologo -optimize -target:exe "-out:$tmp" -r:System.Drawing.dll `
     -r:System.Web.Extensions.dll (Join-Path $PSScriptRoot 'helper\QuietTabHelper.cs') | Where-Object { $_ -notmatch 'C# 5|language versions|go.microsoft' }
 if ($LASTEXITCODE -ne 0) { throw "Compiling the helper failed." }
 

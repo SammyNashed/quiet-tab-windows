@@ -14,8 +14,8 @@ port comes with its own:
   [material-color-utilities](https://github.com/material-foundation/material-color-utilities), with every Material
   You style (Tonal spot, Vibrant, Expressive, Fidelity, …) plus *Exact colour* for when you want your colour unsoftened.
   It also has dark, light, or follow-the-system modes.
-- **Helium's own toolbar follows too**, like on Linux: the change lands the next time you close Helium. You can also
-  press *Apply now* and quit Helium once; it reopens in the new colour with all your tabs.
+- **Matching Helium's toolbar is up to you.** Unlike the Linux version, nothing here touches Helium's settings or
+  restarts it. Press *Copy colour* in the panel, then in Helium open ⋮ → Customize → *Custom color* and paste it.
 
 <p>
   <img src="screenshots/wallpaper.png" width="49%" alt="Following a Lively wallpaper">
@@ -23,19 +23,18 @@ port comes with its own:
   <img src="screenshots/image.png" width="49%" alt="Colours from an uploaded picture">
   <img src="screenshots/light.png" width="49%" alt="Light mode">
 </p>
-<img src="screenshots/helium-toolbar.png" alt="Helium's toolbar recoloured">
 
 ## Install
 
 1. Download or clone this repo somewhere permanent (for example `C:\Users\you\quiet-tab-windows`).
 2. Double-click **`Install.bat`**. It builds the little helper with the C# compiler that already ships with Windows
-   (no downloads, no prebuilt binaries) and registers it with Helium, Chrome, Chromium and Brave.
+   (no downloads, no prebuilt binaries) and registers it with Helium, Chrome, Chromium and Brave. It only
+   reads the wallpaper and never writes to the browser.
 3. In Helium open `helium://extensions`, switch on **Developer mode**, click **Load unpacked**, and choose the
    **`extension`** folder.
 4. Open a new tab and click the palette button in the top-right corner.
 
-Without step 2 everything still works except reading the wallpaper and recolouring Helium's toolbar; the page tells you
-so. `Uninstall.bat` unregisters the helper.
+Without step 2 everything still works except following the wallpaper; the page tells you so. `Uninstall.bat` unregisters the helper.
 
 ## How it works
 
@@ -44,18 +43,14 @@ so. `Uninstall.bat` unregisters the helper.
 | `extension/` | The New Tab page, plus a background worker that turns the colour source into a palette. |
 | `extension/palette.js` | Wallpaper → seed colours (Celebi quantizer + Score, as in matugen) → Material You scheme. |
 | `helper/QuietTabHelper.cs` | A [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host. Helium starts it on demand. It finds the current wallpaper (Lively's active wallpaper, falling back to the Windows desktop picture or solid colour) and sends a small thumbnail whenever it changes. |
-| `--apply-accent` | Helium only reads its toolbar colour at start-up and rewrites its Preferences on exit, so the helper waits in the background until Helium has fully closed. Then it writes `browser.theme.user_color2` and relaunches Helium only if you pressed *Apply now*. Before each write it saves a backup to `Preferences.quiettab.bak`. |
 
 Differences from the Linux version:
 
 - No matugen, `colors.json` or GTK pieces. The extension computes the palette itself and keeps it in extension storage.
-- Helium on Windows uses Chromium's variant numbers (1 tonal spot, 2 neutral, 3 vibrant, 4 expressive). Variant 2 turns
-  the toolbar grey there, so the toolbar variant follows the style you pick, defaulting to 3.
-- Helium doesn't let an extension quit the browser (`chrome://quit` is blocked), and closing its windows one by one
-  would lose all but the last window's tabs. *Apply now* therefore asks you to quit Helium from its menu once.
-
-If you'd rather have Helium's toolbar follow your **Windows accent colour**, Helium's own *Customize → Follow device
-colors* does that. In that case turn off *Match Helium's toolbar colour* here.
+- Helium's toolbar colour isn't synced. On Linux a matugen hook rewrote Helium's Preferences and restarted it. Windows
+  Helium only reads that colour at start-up and won't let an extension quit it, so syncing meant a restart every time.
+  Set it once with *Copy colour* and Helium's Customize panel, or use Helium's *Follow device colors* to follow the
+  Windows accent.
 
 ## Notes
 
