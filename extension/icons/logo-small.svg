@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Quiet Tab</title>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2135"/>
+      <stop offset="1" stop-color="#16111c"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+      <stop offset="0" stop-color="#ff7ae6"/>
+      <stop offset="1" stop-color="#8f6bff"/>
+    </linearGradient>
+    <mask id="m"><rect width="64" height="64" fill="#fff"/><circle cx="41" cy="22" r="17" fill="#000"/></mask>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#tile)"/>
+  <circle cx="29" cy="35" r="21" fill="url(#moon)" mask="url(#m)"/>
+  <path d="M47 9l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#ffd9f6"/>
+</svg>

@@ -9,5 +9,7 @@
       if (typeof v === 'string' && v[0] === '#') root.setProperty('--' + k.replace(/_/g, '-'), v);
     }
     document.documentElement.dataset.scheme = c.dark ? 'dark' : 'light';
+    const icon = localStorage.getItem('qt-favicon');
+    if (icon) document.getElementById('favicon').href = icon;
   } catch (e) { /* first run, or storage blocked: CSS defaults */ }
 })();

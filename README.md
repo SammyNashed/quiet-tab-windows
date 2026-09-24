@@ -1,3 +1,5 @@
+<img src="extension/icons/logo.svg" width="72" align="right" alt="Quiet Tab logo">
+
 # Quiet Tab for Windows
 
 A minimal, curated New Tab page that **takes its colours from your desktop wallpaper**. It works in any Chromium browser
@@ -15,6 +17,7 @@ on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows ve
 - **Nine Material You styles**, using the same colour engine as matugen: Tonal spot, Vibrant, Expressive, Fidelity,
   Content, Rainbow, Fruit salad, Neutral and Monochrome. There's also *Exact colour* for when you want your colour
   unsoftened, and dark, light or follow-the-system modes.
+- **Its own tab icon** that takes on your current accent colour, so even the tab strip matches.
 - **Your own shortcuts, with 3,400+ bundled icons in six styles.** Pick how the whole dock looks: *Site icons*,
   *Brand colour*, *Themed* (tinted to your wallpaper), *Accent*, *Monochrome* or *Logo only*. Each style shows a live
   preview of your own shortcuts. Icons are matched to each shortcut automatically, or you can search the library and

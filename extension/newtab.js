@@ -260,7 +260,19 @@ function applyPalette() {
     if (typeof v === 'string' && v[0] === '#') root.setProperty('--' + k.replace(/_/g, '-'), v);
   }
   document.documentElement.dataset.scheme = dark ? 'dark' : 'light';
-  try { localStorage.setItem('qt-palette', JSON.stringify(c)); } catch (e) { /* not critical */ }
+  const icon = tabIcon(c.primary, c.on_primary);
+  document.getElementById('favicon').href = icon;
+  try {
+    localStorage.setItem('qt-palette', JSON.stringify(c));
+    localStorage.setItem('qt-favicon', icon);
+  } catch (e) { /* not critical */ }
+}
+
+// The tab's icon: the Quiet Tab moon, drawn in the current accent so it matches
+// the page and stays visible on light and dark tab strips alike.
+function tabIcon(bg, fg) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><mask id="m"><rect width="64" height="64" fill="#fff"/><circle cx="41" cy="22" r="17" fill="#000"/></mask><rect width="64" height="64" rx="16" fill="${bg}"/><circle cx="29" cy="35" r="21" fill="${fg}" mask="url(#m)"/><path d="M47 9l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="${fg}"/></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
 function swatch(hex, active, onPick) {
