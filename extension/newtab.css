@@ -137,6 +137,7 @@ main {
 .tile-letter { font-size: 0.33em; font-weight: 700; text-transform: uppercase; }
 
 .tile.is-site { background: var(--primary); color: var(--on-primary); }
+.tile.is-site.style-brand { background: var(--brand); color: var(--brand-fg); }
 /* Transparent favicons sit on white, the way phones show app icons. */
 .tile.is-site.has-img { background: #fff; }
 .style-brand { background: var(--brand, var(--primary)); color: var(--brand-fg, var(--on-primary)); }

@@ -101,18 +101,41 @@ function curatedIcon(pageUrl) {
   return null;
 }
 
-function siteIconCandidates(pageUrl) {
-  const curated = curatedIcon(pageUrl);
-  if (curated) return [curated];
-  // apple-touch-icon is the closest thing to a standard square "app icon".
+// The icons a site declares in its own page, best first: apple-touch-icon (the
+// square "app icon"), then the largest other icon it lists.
+async function declaredIcons(origin) {
+  try {
+    const res = await fetch(origin + '/', { credentials: 'omit' });
+    if (!res.ok || !(res.headers.get('content-type') || '').includes('html')) return [];
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const found = [];
+    for (const link of doc.querySelectorAll('link[rel][href]')) {
+      const rel = link.getAttribute('rel').toLowerCase();
+      if (!/\bicon\b|apple-touch-icon/.test(rel)) continue;
+      const size = Math.max(0, ...(link.getAttribute('sizes') || '').split(/\s+/).map((v) => parseInt(v, 10) || 0));
+      const svg = /\.svg(\?|$)/i.test(link.getAttribute('href')) || link.getAttribute('type') === 'image/svg+xml';
+      const score = (rel.includes('apple-touch-icon') ? 10000 : 0) + (svg ? 5000 : 0) + (size || 32);
+      try { found.push({ url: new URL(link.getAttribute('href'), res.url).href, score }); } catch (e) { /* bad href */ }
+    }
+    return found.sort((a, b) => b.score - a.score).map((f) => f.url);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function siteIconCandidates(pageUrl) {
   const origin = new URL(pageUrl).origin;
-  return [`${origin}/apple-touch-icon.png`, `${origin}/apple-touch-icon-precomposed.png`, `${origin}/favicon.ico`];
+  const guessed = [`${origin}/apple-touch-icon.png`, `${origin}/apple-touch-icon-precomposed.png`, `${origin}/favicon.ico`];
+  const declared = await declaredIcons(origin);
+  return [...declared, ...guessed.filter((u) => !declared.includes(u))];
 }
 
 // Favicons often come with no-cache headers; resolve each once and keep it as a
 // data URL so a new tab never waits on the network.
+const ICON_CACHE_KEY = 'iconCache2'; // v2: prefers the icons a page declares
 const ICON_CACHE_TTL = 1000 * 60 * 60 * 24 * 30;
 let siteCache = null;
+const inFlight = new Map();
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -123,22 +146,30 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function siteIcon(pageUrl) {
+export function siteIcon(pageUrl) {
+  const curated = curatedIcon(pageUrl);
+  if (curated) return Promise.resolve(curated);
   const host = new URL(pageUrl).hostname;
-  if (!siteCache) siteCache = (await chrome.storage.local.get('iconCache')).iconCache || {};
+  // The dock and the style previews ask for the same icons at once.
+  if (!inFlight.has(host)) inFlight.set(host, resolveSiteIcon(pageUrl, host).finally(() => inFlight.delete(host)));
+  return inFlight.get(host);
+}
+
+async function resolveSiteIcon(pageUrl, host) {
+  if (!siteCache) siteCache = (await chrome.storage.local.get(ICON_CACHE_KEY))[ICON_CACHE_KEY] || {};
   const cached = siteCache[host];
   if (cached && Date.now() - cached.ts < ICON_CACHE_TTL) return cached.dataUrl;
 
-  for (const url of siteIconCandidates(pageUrl)) {
-    if (url.startsWith('chrome-extension://')) return url;
+  for (const url of await siteIconCandidates(pageUrl)) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: 'omit' });
       if (!res.ok) continue;
       const blob = await res.blob();
-      if (!blob.size || !blob.type.startsWith('image')) continue;
+      if (!blob.size || !blob.type.startsWith('image')) continue; // some sites answer with a web page
       const dataUrl = await blobToDataUrl(blob);
       siteCache[host] = { dataUrl, ts: Date.now() };
-      chrome.storage.local.set({ iconCache: siteCache });
+      chrome.storage.local.set({ [ICON_CACHE_KEY]: siteCache });
+      chrome.storage.local.remove('iconCache');
       return dataUrl;
     } catch (e) { /* try the next one */ }
   }
@@ -211,12 +242,14 @@ function drawIos(tile, link, glyph, letter) {
   }
   // No library logo: the site's own icon, inset on the same dark tile.
   const l = letter();
+  tile.dataset.loading = '1';
   siteIcon(link.url).then((src) => {
-    if (!src) return;
+    if (!src) { delete tile.dataset.loading; return; }
     const img = document.createElement('img');
     img.alt = '';
     img.className = 'ios-inset';
-    img.onload = () => { l.remove(); tile.appendChild(img); };
+    img.onload = () => { l.remove(); tile.appendChild(img); delete tile.dataset.loading; };
+    img.onerror = () => { delete tile.dataset.loading; };
     img.src = src;
   });
 }
@@ -238,12 +271,31 @@ export function drawIcon(tile, link, style) {
 
   const site = () => {
     tile.classList.add('is-site');
-    const l = letter();
+    // While the site's icon loads, or if it can't be fetched, show its bundled
+    // logo on its brand colour rather than a bare letter.
+    let placeholder;
+    if (glyph) {
+      tile.classList.add('style-brand');
+      tile.style.setProperty('--brand', '#' + glyph[2]);
+      tile.style.setProperty('--brand-fg', luminance(glyph[2]) > 0.55 ? '#111' : '#fff');
+      placeholder = glyphSvg(glyph[3]);
+      tile.appendChild(placeholder);
+    } else {
+      placeholder = letter();
+    }
+    tile.dataset.loading = '1';
     siteIcon(link.url).then((src) => {
-      if (!src) return;
+      if (!src) { delete tile.dataset.loading; return; }
       const img = document.createElement('img');
       img.alt = '';
-      img.onload = () => { l.remove(); tile.classList.add('has-img'); tile.appendChild(img); };
+      img.onload = () => {
+        placeholder.remove();
+        tile.classList.remove('style-brand');
+        tile.classList.add('has-img');
+        tile.appendChild(img);
+        delete tile.dataset.loading;
+      };
+      img.onerror = () => { delete tile.dataset.loading; };
       img.src = src;
     });
   };
