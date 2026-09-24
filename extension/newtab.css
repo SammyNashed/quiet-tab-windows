@@ -568,6 +568,8 @@ main {
 .icon-pick-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .icon-pick-head .label { margin: 0 0 2px; }
 .icon-pick-head .hint { margin: 0; }
+.icon-pick-text { flex: 1; }
+.icon-pick-head .btn[hidden] { display: none; }
 .icon-pick .seg { margin-bottom: 10px; }
 .add-panel .icon-pick input { margin: 0; }
 

@@ -18,9 +18,9 @@ on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows ve
   Content, Rainbow, Fruit salad, Neutral and Monochrome. There's also *Exact colour* for when you want your colour
   unsoftened, and dark, light or follow-the-system modes.
 - **Its own tab icon** that takes on your current accent colour, so even the tab strip matches.
-- **Your own shortcuts, with 3,400+ bundled icons in seven styles.** By default they look like **iOS 26 dark-mode**
-  icons: each logo in its own colour on a dark glass tile. You can also choose *Site icons*, *Brand colour*, *Themed*
-  (tinted to your wallpaper), *Accent*, *Monochrome* or *Logo only*. Each style shows a live
+- **Your own shortcuts, with 3,400+ bundled icons in six styles.** By default they look like **iOS 26 dark-mode**
+  icons: each logo in its own colour on a dark glass tile. You can also choose *Brand colour*, *Themed* (tinted to
+  your wallpaper), *Accent*, *Monochrome* or *Logo only*. Each style shows a live
   preview of your own shortcuts. Icons are matched to each shortcut automatically, or you can search the library and
   choose one yourself. No tracking and no "most visited".
 
@@ -31,7 +31,7 @@ on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows ve
 | <img src="screenshots/green-vibrant-light.png" alt="Green aurora, Vibrant, light mode"> | <img src="screenshots/red-content.png" alt="Red aurora, Content"> |
 | Aurora from orbit, second swatch picked · *Vibrant*, light · Logo only | Red aurora · *Content* · Accent icons |
 | <img src="screenshots/image-expressive.png" alt="Uploaded picture, Expressive"> | <img src="screenshots/custom-exact.png" alt="Custom colour, Exact"> |
-| An uploaded picture (Crab Nebula) · *Expressive* · Monochrome icons | Custom colour · *Exact colour* · Site icons |
+| An uploaded picture (Crab Nebula) · *Expressive* · Monochrome icons | Custom colour · *Exact colour* · Brand colour icons |
 
 ## Shortcut icons
 
@@ -46,11 +46,11 @@ on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows ve
   its brand colour, if you want to browse them or use them elsewhere.
 - Pick a style under **Icon style** in the colour panel; every option previews your own shortcuts.
 - Adding a shortcut (**+**) or editing one (the **✎** that appears on hover) shows its icon straight away. You can keep
-  *Automatic* (matched from the address, for example `mail.google.com` → Gmail and `drive.google.com` → Google Drive),
-  use *Site's own icon*, or search the library and pick any logo.
+  *Automatic* (matched from the address, for example `mail.google.com` → Gmail and `drive.google.com` → Google Drive)
+  or search the library and pick any logo.
 - A few big brands don't allow their logos in Simple Icons (Microsoft, Amazon, LinkedIn, OpenAI, Slack). Those use the
-  site's own icon (inset on the dark tile in *iOS 26 dark*, full-size in *Brand colour*), and a lettered tile in the
-  other styles, unless you pick something else.
+  site's own icon (on the dark tile in *iOS 26 dark*, full-size in *Brand colour*) and a lettered tile in the other
+  styles, unless you pick a logo for them.
 
 ## Install
 
@@ -93,7 +93,7 @@ They follow the four install steps above. Things worth telling them:
 | Piece | What it does |
 |---|---|
 | `extension/` | The New Tab page, plus a background worker that turns the colour source into a palette. |
-| `extension/icons.js` + `extension/icons/library.json` | The icon library (built from Simple Icons by `tools/build-icon-library.mjs`), domain matching, and the seven icon styles. The 4.7 MB library is only read when adding or matching a shortcut; each shortcut keeps its own icon, so a new tab never loads it. |
+| `extension/icons.js` + `extension/icons/library.json` | The icon library (built from Simple Icons by `tools/build-icon-library.mjs`), domain matching, and the six icon styles. The 4.7 MB library is only read when adding or matching a shortcut; each shortcut keeps its own icon, so a new tab never loads it. |
 | `extension/palette.js` | Wallpaper → seed colours (Celebi quantizer + Score, as in matugen; near-black and near-grey swatches are dropped) → Material You scheme. |
 | `helper/QuietTabHelper.cs` | A [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host that the browser starts on demand. It finds the current wallpaper (Lively's active wallpaper, falling back to the Windows desktop picture or solid colour) and sends a small thumbnail whenever it changes. |
 
@@ -109,7 +109,8 @@ Helium 0.18.
   (`carina_nebula`, `GSFC_20171208_Archive_e000842`, `iss023e058455`, `KSC-20251111-PH-JBS01_0011`, `PIA03606`).
 - Shortcut icons: [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0), bundled as
   `extension/icons/library.json`. The logos are trademarks of their owners and are shown only to identify each site.
-- The two curated *Site icons* in `extension/icons/apps/` come from third-party icon packs, as in the Linux version.
+- The hand-made iOS-style WhatsApp and YouTube icons in `extension/icons/apps/` come from third-party icon packs, as
+  in the Linux version.
 
 ## License
 

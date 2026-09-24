@@ -1,9 +1,9 @@
 // Shortcut icons: the bundled Simple Icons library (3,400+ brand glyphs, CC0),
-// each site's own app icon, and the styles that draw either of them.
+// and the styles that draw them. A site's own icon is only a fallback for
+// sites the library has no logo for.
 
 export const ICON_STYLES = [
   { id: 'ios', label: 'iOS 26 dark', hint: 'Dark glass tiles, logos in colour' },
-  { id: 'site', label: 'Site icons', hint: 'Each site’s own app icon' },
   { id: 'brand', label: 'Brand colour', hint: 'Logo on its brand colour' },
   { id: 'themed', label: 'Themed', hint: 'Tinted to match your colours' },
   { id: 'accent', label: 'Accent', hint: 'Solid tiles in your accent' },
@@ -301,7 +301,7 @@ export function drawIcon(tile, link, style) {
   };
 
   if (style === 'ios') { drawIos(tile, link, glyph, letter); return; }
-  if (style === 'site' || (!glyph && style === 'brand')) { site(); return; }
+  if (!glyph && style === 'brand') { site(); return; }
 
   if (glyph) {
     const hex = glyph[2];

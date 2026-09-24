@@ -57,20 +57,24 @@ async function saveLinks(links) {
   await chrome.storage.local.set({ links });
 }
 
-// A link's `icon` is 'auto' (match by domain), 'site' (always the site's own icon)
-// or a library slug; `glyph` caches the resolved library entry so a new tab never
+// A link's `icon` is 'auto' (match by domain) or a library slug; `glyph` caches the resolved library entry so a new tab never
 // has to load the whole library.
 function resolveGlyph(link, lib) {
-  const choice = link.icon || 'auto';
-  if (choice === 'site') return null;
+  // 'site' was an option in 1.2.0; it now just means automatic.
+  const choice = !link.icon || link.icon === 'site' ? 'auto' : link.icon;
   const slug = choice === 'auto' ? matchSlug(link.url, lib) : choice;
   return (slug && lib.bySlug.get(slug)) || null;
 }
 
 async function ensureGlyphs(links) {
-  if (links.every((l) => 'glyph' in l)) return false;
+  const stale = (l) => !('glyph' in l) || l.icon === 'site';
+  if (!links.some(stale)) return false;
   const lib = await loadLibrary();
-  for (const l of links) if (!('glyph' in l)) l.glyph = resolveGlyph(l, lib);
+  for (const l of links) {
+    if (!stale(l)) continue;
+    if (l.icon === 'site') l.icon = 'auto';
+    l.glyph = resolveGlyph(l, lib);
+  }
   await saveLinks(links);
   return true;
 }
@@ -142,10 +146,9 @@ async function refreshAddPreview() {
   const tile = document.createElement('div');
   drawIcon(tile, draft, iconStyle());
   addPreview.appendChild(tile);
-  addIconLabel.textContent = draftIcon === 'site' ? 'The site’s own icon'
-    : draftIcon !== 'auto' ? (draft.glyph ? draft.glyph[1] : 'Automatic')
+  addIconLabel.textContent = draftIcon !== 'auto' ? (draft.glyph ? draft.glyph[1] : 'Automatic')
     : draft.glyph ? `Automatic: ${draft.glyph[1]}` : 'Automatic (no match yet, uses the site’s icon)';
-  document.querySelectorAll('#iconChoiceRow button').forEach((b) => b.classList.toggle('on', b.dataset.choice === draftIcon));
+  document.getElementById('iconAuto').hidden = draftIcon === 'auto';
 }
 
 async function refreshIconResults() {
@@ -157,7 +160,7 @@ async function refreshIconResults() {
     b.className = 'icon-result icon-' + iconStyle() + (draftIcon === entry[0] ? ' on' : '');
     b.title = entry[1];
     const tile = document.createElement('div');
-    drawIcon(tile, { name: entry[1], url: 'https://example.invalid', glyph: entry }, iconStyle() === 'site' ? 'brand' : iconStyle());
+    drawIcon(tile, { name: entry[1], url: 'https://example.invalid', glyph: entry }, iconStyle());
     b.appendChild(tile);
     b.addEventListener('click', () => { draftIcon = entry[0]; refreshAddPreview(); refreshIconResults(); });
     iconResults.appendChild(b);
@@ -172,7 +175,7 @@ async function openAddPanel(index) {
   document.getElementById('addSave').textContent = link ? 'Save' : 'Add';
   addName.value = link ? link.name : '';
   addUrl.value = link ? link.url : '';
-  draftIcon = link ? link.icon || 'auto' : 'auto';
+  draftIcon = link && link.icon && link.icon !== 'site' ? link.icon : 'auto';
   iconSearch.value = '';
   iconResults.hidden = true;
   addPanel.hidden = false;
@@ -227,11 +230,11 @@ let previewTimer = null;
   previewTimer = setTimeout(refreshAddPreview, 250);
 }));
 iconSearch.addEventListener('input', refreshIconResults);
-document.querySelectorAll('#iconChoiceRow button').forEach((b) => b.addEventListener('click', () => {
-  draftIcon = b.dataset.choice;
+document.getElementById('iconAuto').addEventListener('click', () => {
+  draftIcon = 'auto';
   refreshAddPreview();
   refreshIconResults();
-}));
+});
 
 tickClock();
 setInterval(tickClock, 1000);
@@ -249,7 +252,7 @@ let state = {};
 // picked; only a style they chose themselves survives a change of default.
 function withDefaults(saved) {
   const s = { ...DEFAULT_SETTINGS, ...(saved || {}) };
-  if (!s.iconStyleChosen) s.iconStyle = DEFAULT_SETTINGS.iconStyle;
+  if (!s.iconStyleChosen || !ICON_STYLES.some((st) => st.id === s.iconStyle)) s.iconStyle = DEFAULT_SETTINGS.iconStyle;
   return s;
 }
 
