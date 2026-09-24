@@ -38,6 +38,8 @@ on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows ve
 
 - The extension ships with the whole [Simple Icons](https://simpleicons.org) set: 3,400+ brand logos, each with its
   official colour.
+  They're also included as individual files in `extension/icons/brands/` (for example `github.svg`), one per logo in
+  its brand colour, if you want to browse them or use them elsewhere.
 - Pick a style under **Icon style** in the colour panel; every option previews your own shortcuts.
 - Adding a shortcut (**+**) or editing one (the **✎** that appears on hover) shows its icon straight away. You can keep
   *Automatic* (matched from the address, for example `mail.google.com` → Gmail and `drive.google.com` → Google Drive),

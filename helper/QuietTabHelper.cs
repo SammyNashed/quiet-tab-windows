@@ -28,7 +28,7 @@ static class QuietTabHelper
 {
     const string HostName = "com.quiettab.helper";
     const string ExtensionId = "joacmdfomnhaeiljfnfjjadkjjbbkhcp";
-    const string Version = "1.2.0";
+    const string Version = "1.2.1";
     const int ThumbMax = 480;
 
     // Where each Chromium browser looks for native messaging hosts (Chrome's key also
