@@ -28,20 +28,21 @@ static class QuietTabHelper
 {
     const string HostName = "com.quiettab.helper";
     const string ExtensionId = "joacmdfomnhaeiljfnfjjadkjjbbkhcp";
-    const string Version = "1.0.0";
+    const string Version = "1.1.0";
     const int ThumbMax = 480;
 
-    // Where each Chromium fork looks for native messaging hosts. Helium's own key comes first;
-    // the others make the extension usable in Chrome/Chromium/Brave too.
+    // Where each Chromium browser looks for native messaging hosts (Chrome's key also
+    // covers browsers that reuse it).
     static readonly string[] HostRegistryRoots = {
         @"Software\imput\Helium\NativeMessagingHosts",
         @"Software\Chromium\NativeMessagingHosts",
         @"Software\Google\Chrome\NativeMessagingHosts",
         @"Software\BraveSoftware\Brave-Browser\NativeMessagingHosts",
+        @"Software\Microsoft\Edge\NativeMessagingHosts",
+        @"Software\Vivaldi\NativeMessagingHosts",
     };
 
     static readonly string LocalAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-    static readonly string HeliumDir = Path.Combine(LocalAppData, @"imput\Helium");
     static readonly string StateDir = Path.Combine(LocalAppData, "QuietTab");
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
 
@@ -125,7 +126,7 @@ static class QuietTabHelper
         {
             var reader = new Thread(ReadLoop) { IsBackground = true };
             reader.Start();
-            Send(new Dictionary<string, object> { { "type", "hello" }, { "version", Version }, { "helium", Directory.Exists(HeliumDir) } });
+            Send(new Dictionary<string, object> { { "type", "hello" }, { "version", Version } });
             while (alive)
             {
                 try { PollWallpaper(); }

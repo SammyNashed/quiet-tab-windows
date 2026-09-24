@@ -9,7 +9,7 @@ $ext  = Join-Path $PSScriptRoot 'extension'
 
 if ($Uninstall) {
     if (Test-Path $exe) { & $exe --uninstall }
-    Write-Host "Helper unregistered. Remove the extension from helium://extensions to finish."
+    Write-Host "Helper unregistered. Remove the extension from your browser's extensions page to finish."
     return
 }
 
@@ -32,8 +32,8 @@ Move-Item $tmp $exe
 & $exe --install
 
 Write-Host ""
-Write-Host "Helper installed. One manual step left, in Helium:" -ForegroundColor Cyan
-Write-Host "  1. Open helium://extensions and turn on Developer mode (top right)."
+Write-Host "Helper installed. One manual step left, in your browser (Chrome, Edge, Brave, Helium...):" -ForegroundColor Cyan
+Write-Host "  1. Open its extensions page (chrome://extensions, edge://extensions, ...) and turn on Developer mode."
 Write-Host "  2. Click 'Load unpacked' and choose:  $ext"
 Write-Host "  3. Open a new tab. Click the palette button (top right) for colour options."
-Write-Host "If it was already loaded, press its reload button (or restart Helium) so it reconnects."
+Write-Host "If it was already loaded, press its reload button (or restart the browser) so it reconnects."

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Quiet Tab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A minimal, curated New Tab page that follows your Windows wallpaper (Lively too), or any colour you pick.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqzcCdrbZqT9rbCBnFRki7dqenVuQn30MAs5tVeKi7Wy5Ysx0ifITnwpPCrkCLjC2KkDHy2tdmwoQ9CDHKqr+e821EDfN20A9WQ87y/OKUvcZlu/d6mCbH+Ak/CR2WzjZaMmX7V41PmQqZWrxAxwe28l+OiiX53GbBbrwlPEyBI5LjpgB0BY1y5wlam33snZju1+A3iUeA8474lXSzG+pGFS9B8U4Icqv3+NpcbuZB+m26n0kiy4MA9faQPwRpK4ilaH+u5xehvz71ekOAp7sz1aDqHBkrG1uWhYg0yt8YPYlXG9MOnNEG/O9lEVUWbS3wuCmRTh9yBCQZi2pXhg2HwIDAQAB",
   "chrome_url_overrides": {

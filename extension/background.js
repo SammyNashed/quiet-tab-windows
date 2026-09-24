@@ -33,7 +33,7 @@ function connectHost() {
 
 async function onHostMessage(msg) {
   if (msg.type === 'hello') {
-    await chrome.storage.local.set({ host: { status: 'connected', version: msg.version, helium: msg.helium } });
+    await chrome.storage.local.set({ host: { status: 'connected', version: msg.version } });
     return;
   }
   if (msg.type === 'wallpaper') {

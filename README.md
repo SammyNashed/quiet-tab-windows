@@ -1,65 +1,87 @@
 # Quiet Tab for Windows
 
-The Windows version of [Quiet Tab](https://github.com/SammyNashed/quiet-tab): a minimal, curated New Tab page for
-[Helium](https://helium.computer) (or any Chromium browser). On Linux it followed matugen. Windows has no matugen, so this
-port comes with its own:
+A minimal, curated New Tab page that **takes its colours from your desktop wallpaper**. It works in any Chromium browser
+on Windows: Chrome, Edge, Brave, Helium, Vivaldi and others. It's the Windows version of
+[Quiet Tab](https://github.com/SammyNashed/quiet-tab), which does the same on Linux with matugen.
 
-- **Follows your wallpaper, live**, including animated [Lively Wallpaper](https://www.rocksdanister.com/lively/) ones
-  as well as the ordinary Windows desktop picture. Change the wallpaper and every open New Tab recolours within a couple
+<img src="screenshots/hero.png" alt="Quiet Tab following an orange nebula wallpaper">
+
+- **Follows your wallpaper, live.** It picks up animated [Lively Wallpaper](https://www.rocksdanister.com/lively/) ones
+  and the ordinary Windows desktop picture. Change the wallpaper and every open New Tab recolours within a couple
   of seconds.
 - **Built-in colour picker.** Choose any of the colours pulled from the wallpaper, or click anywhere on the wallpaper
-  preview to use that exact spot. You can also pick a custom colour (colour wheel, presets, or *Pick from screen*,
+  preview to use that exact spot. You can also pick your own colour (colour wheel, presets, or *Pick from screen*,
   which samples anything on your screen), or upload any picture.
-- **Same colour science as matugen**: Google's
-  [material-color-utilities](https://github.com/material-foundation/material-color-utilities), with every Material
-  You style (Tonal spot, Vibrant, Expressive, Fidelity, …) plus *Exact colour* for when you want your colour unsoftened.
-  It also has dark, light, or follow-the-system modes.
-- **Matching Helium's toolbar is up to you.** Unlike the Linux version, nothing here touches Helium's settings or
-  restarts it. To match, open ⋮ → Customize in Helium and pick one of its colours.
+- **Nine Material You styles**, using the same colour engine as matugen: Tonal spot, Vibrant, Expressive, Fidelity,
+  Content, Rainbow, Fruit salad, Neutral and Monochrome. There's also *Exact colour* for when you want your colour
+  unsoftened, and dark, light or follow-the-system modes.
+- **Your own shortcuts** in a dock, with each site's own high-res icon. No tracking and no "most visited".
 
-<p>
-  <img src="screenshots/wallpaper.png" width="49%" alt="Following a Lively wallpaper">
-  <img src="screenshots/custom.png" width="49%" alt="Custom colour, exact style">
-  <img src="screenshots/image.png" width="49%" alt="Colours from an uploaded picture">
-  <img src="screenshots/light.png" width="49%" alt="Light mode">
-</p>
+| | |
+|---|---|
+| <img src="screenshots/orange-tonal-spot.png" alt="Orange nebula, Tonal spot"> | <img src="screenshots/blue-fidelity.png" alt="Blue nebula, Fidelity"> |
+| Carina Nebula · *Tonal spot* | Pillars of Creation · *Fidelity* |
+| <img src="screenshots/green-vibrant-light.png" alt="Green aurora, Vibrant, light mode"> | <img src="screenshots/red-content.png" alt="Red aurora, Content"> |
+| Aurora from orbit, second swatch picked · *Vibrant*, light mode | Red aurora · *Content* |
+| <img src="screenshots/image-expressive.png" alt="Uploaded picture, Expressive"> | <img src="screenshots/custom-exact.png" alt="Custom colour, Exact"> |
+| An uploaded picture (Crab Nebula) · *Expressive* | Custom colour · *Exact colour* |
 
 ## Install
 
-1. Download or clone this repo somewhere permanent (for example `C:\Users\you\quiet-tab-windows`).
-2. Double-click **`Install.bat`**. It builds the little helper with the C# compiler that already ships with Windows
-   (no downloads, no prebuilt binaries) and registers it with Helium, Chrome, Chromium and Brave. It only
-   reads the wallpaper and never writes to the browser.
-3. In Helium open `helium://extensions`, switch on **Developer mode**, click **Load unpacked**, and choose the
-   **`extension`** folder.
-4. Open a new tab and click the palette button in the top-right corner.
+1. **Get the files.** Download `QuietTab-Windows-<version>.zip` from the
+   [latest release](https://github.com/SammyNashed/quiet-tab-windows/releases/latest) and unzip it somewhere it can
+   stay, such as `Documents\quiet-tab-windows`. Don't delete the folder afterwards; the browser loads the extension
+   from it.
+2. **Double-click `Install.bat`** (optional, but it's what makes the wallpaper following work). It builds a small
+   helper with the C# compiler that already ships with Windows, so there's nothing to download and no prebuilt exe.
+   It also registers the helper with Chrome, Edge, Brave, Helium, Vivaldi and Chromium. The helper only reads the
+   wallpaper and never changes anything in your browser.
+3. **Load the extension.** Open your browser's extensions page (`chrome://extensions`, `edge://extensions`,
+   `brave://extensions`, …), turn on **Developer mode**, click **Load unpacked**, and choose the **`extension`**
+   folder *inside* the one you unzipped. Choosing the outer folder gives "Manifest file is missing".
+4. **Open a new tab.** If the browser asks whether to keep the changed New Tab page, choose to keep it. Then click
+   the palette button in the top-right corner.
 
-Without step 2 everything still works except following the wallpaper; the page tells you so. `Uninstall.bat` unregisters the helper.
+Skipping step 2 still gives you everything except following the wallpaper; the page says so. `Uninstall.bat` removes the
+helper again.
+
+**Matching the browser itself:** the extension doesn't change your browser's own theme. The panel has an *Open
+appearance settings* button, where you can pick one of the browser's colours to go with it.
+
+## Sharing it with friends
+
+Send them the link to the release page:
+
+> https://github.com/SammyNashed/quiet-tab-windows/releases/latest
+
+They follow the four install steps above. Things worth telling them:
+
+- It's Windows-only because of the wallpaper helper. The New Tab page itself would run in Chrome on any OS, just
+  without wallpaper following.
+- Loading it unpacked means their browser may show a "developer mode extensions" notice now and then. That's normal
+  for anything installed outside the Chrome Web Store.
+- To update, they download the new zip, replace the folder, and press the reload arrow on the extension card.
 
 ## How it works
 
 | Piece | What it does |
 |---|---|
 | `extension/` | The New Tab page, plus a background worker that turns the colour source into a palette. |
-| `extension/palette.js` | Wallpaper → seed colours (Celebi quantizer + Score, as in matugen) → Material You scheme. |
-| `helper/QuietTabHelper.cs` | A [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host. Helium starts it on demand. It finds the current wallpaper (Lively's active wallpaper, falling back to the Windows desktop picture or solid colour) and sends a small thumbnail whenever it changes. |
+| `extension/palette.js` | Wallpaper → seed colours (Celebi quantizer + Score, as in matugen; near-black and near-grey swatches are dropped) → Material You scheme. |
+| `helper/QuietTabHelper.cs` | A [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host that the browser starts on demand. It finds the current wallpaper (Lively's active wallpaper, falling back to the Windows desktop picture or solid colour) and sends a small thumbnail whenever it changes. |
 
-Differences from the Linux version:
+The extension's ID is fixed (`joacmdfomnhaeiljfnfjjadkjjbbkhcp`) by the `key` in `manifest.json`, so it's the same in
+every browser and on every PC, and the helper only answers that ID. It has been tested in Chrome 154, Edge and
+Helium 0.18.
 
-- No matugen, `colors.json` or GTK pieces. The extension computes the palette itself and keeps it in extension storage.
-- Helium's toolbar colour isn't synced. On Linux a matugen hook rewrote Helium's Preferences and restarted it. Windows
-  Helium only reads that colour at start-up and won't let an extension quit it, so syncing meant a restart every time.
-  Pick one of Helium's colours in its Customize panel instead.
+## Credits
 
-## Notes
-
-- The extension's ID is fixed (`joacmdfomnhaeiljfnfjjadkjjbbkhcp`) through the `key` in `manifest.json`. The helper only
-  answers that ID.
-- Shortcuts, icon caching and the curated icons in `extension/icons/apps/` are carried over from the Linux version,
-  with the same caveat: those two override images come from third-party icon packs.
-- The helper logs to `%LOCALAPPDATA%\QuietTab\helper.log`.
+- Colour science: Google's [material-color-utilities](https://github.com/material-foundation/material-color-utilities)
+  (Apache 2.0), bundled as `extension/vendor/mcu.js`.
+- Screenshot wallpapers: public-domain images from the [NASA Image and Video Library](https://images.nasa.gov)
+  (`carina_nebula`, `GSFC_20171208_Archive_e000842`, `iss023e058455`, `KSC-20251111-PH-JBS01_0011`, `PIA03606`).
+- The two curated shortcut icons in `extension/icons/apps/` come from third-party icon packs, as in the Linux version.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). `extension/vendor/mcu.js` is material-color-utilities, © Google, Apache 2.0
-(`extension/vendor/mcu.LICENSE`).
+MIT, see [LICENSE](LICENSE).

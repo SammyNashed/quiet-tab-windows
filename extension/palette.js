@@ -44,13 +44,20 @@ async function imagePixels(src, size = 128) {
 export async function extractSeeds(src, count = 5) {
   const pixels = await imagePixels(src);
   const quantized = QuantizerCelebi.quantize(pixels, 128);
-  let seeds = Score.score(quantized, { desired: count, filter: true });
+  let seeds = Score.score(quantized, { desired: count * 2, filter: true });
   // Near-greyscale images leave the filtered list with just the fallback blue;
   // take the dominant colours unfiltered instead so the page still matches.
   if (seeds.length === 1 && seeds[0] === 0xff4285f4) {
     seeds = Score.score(quantized, { desired: count, filter: false });
   }
-  return seeds.map(hexFromArgb);
+  // Space and night wallpapers are mostly near-black, and Score happily offers
+  // those as swatches. Keep the order (the first is still matugen's pick) but
+  // drop colours too dark or too grey to theme with, unless nothing else is left.
+  const usable = seeds.filter((argb) => {
+    const hct = Hct.fromInt(argb);
+    return hct.tone >= 12 && hct.chroma >= 12;
+  });
+  return (usable.length ? usable : seeds).slice(0, count).map(hexFromArgb);
 }
 
 function chroma(hex) {

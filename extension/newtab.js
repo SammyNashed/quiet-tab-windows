@@ -389,6 +389,8 @@ function setupSettings() {
   });
 
 
+  $('openAppearance').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://settings/appearance' }));
+
   darkQuery.addEventListener('change', applyPalette);
 }
 
