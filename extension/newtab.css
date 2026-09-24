@@ -427,7 +427,7 @@ main {
   cursor: pointer;
 }
 
-.custom-row input[type="text"], .field select {
+.field select {
   padding: 9px 10px;
   border-radius: 10px;
   border: 1px solid var(--outline-variant);
@@ -438,7 +438,6 @@ main {
   outline: none;
 }
 
-.custom-row input[type="text"] { width: 92px; font-family: ui-monospace, Consolas, monospace; }
 .field select { width: 100%; cursor: pointer; }
 .field select option { background: var(--surface); color: var(--on-surface); }
 
@@ -470,8 +469,6 @@ main {
 .check { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .check input { width: 18px; height: 18px; accent-color: var(--primary); }
 
-.seed-line { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
-.chip { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
 
 [data-scheme="light"] .dock { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12); }
 [data-scheme="light"] .settings { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16); }

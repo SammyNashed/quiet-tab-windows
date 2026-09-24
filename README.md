@@ -15,7 +15,7 @@ port comes with its own:
   You style (Tonal spot, Vibrant, Expressive, Fidelity, …) plus *Exact colour* for when you want your colour unsoftened.
   It also has dark, light, or follow-the-system modes.
 - **Matching Helium's toolbar is up to you.** Unlike the Linux version, nothing here touches Helium's settings or
-  restarts it. Press *Copy colour* in the panel, then in Helium open ⋮ → Customize → *Custom color* and paste it.
+  restarts it. To match, open ⋮ → Customize in Helium and pick one of its colours.
 
 <p>
   <img src="screenshots/wallpaper.png" width="49%" alt="Following a Lively wallpaper">
@@ -49,8 +49,7 @@ Differences from the Linux version:
 - No matugen, `colors.json` or GTK pieces. The extension computes the palette itself and keeps it in extension storage.
 - Helium's toolbar colour isn't synced. On Linux a matugen hook rewrote Helium's Preferences and restarted it. Windows
   Helium only reads that colour at start-up and won't let an extension quit it, so syncing meant a restart every time.
-  Set it once with *Copy colour* and Helium's Customize panel, or use Helium's *Follow device colors* to follow the
-  Windows accent.
+  Pick one of Helium's colours in its Customize panel instead.
 
 ## Notes
 

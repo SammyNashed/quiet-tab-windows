@@ -263,11 +263,10 @@ function applyPalette() {
   try { localStorage.setItem('qt-palette', JSON.stringify(c)); } catch (e) { /* not critical */ }
 }
 
-function swatch(hex, active, onPick, title) {
+function swatch(hex, active, onPick) {
   const b = document.createElement('button');
   b.className = 'swatch' + (active ? ' active' : '');
   b.style.background = hex;
-  b.title = title || hex;
   b.addEventListener('click', onPick);
   return b;
 }
@@ -300,13 +299,10 @@ function pixelAt(canvas, e) {
 }
 
 function renderSettings() {
-  const seed = state.palette ? state.palette.seed : settings.custom;
   document.querySelectorAll('#sourceSeg button').forEach((b) => b.classList.toggle('on', b.dataset.source === settings.source));
   document.querySelectorAll('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === settings.mode));
   document.querySelectorAll('[data-pane]').forEach((s) => { s.hidden = s.dataset.pane !== settings.source; });
   $('styleSelect').value = settings.style;
-  $('seedChip').style.background = seed;
-  $('seedHex').textContent = seed;
 
   // wallpaper pane
   const wp = state.wallpaper;
@@ -323,15 +319,12 @@ function renderSettings() {
   const picked = settings.pick && wp && settings.pick.stamp === wp.stamp ? settings.pick.hex : null;
   seeds.forEach((hex, i) => {
     const active = picked ? picked === hex : i === 0;
-    wpBox.appendChild(swatch(hex, active,
-      () => saveSettings({ pick: i === 0 ? null : { stamp: wp.stamp, hex } }),
-      i === 0 ? hex + ' (automatic)' : hex));
+    wpBox.appendChild(swatch(hex, active, () => saveSettings({ pick: i === 0 ? null : { stamp: wp.stamp, hex } })));
   });
-  if (picked && !seeds.includes(picked)) wpBox.appendChild(swatch(picked, true, () => {}, picked + ' (picked)'));
+  if (picked && !seeds.includes(picked)) wpBox.appendChild(swatch(picked, true, () => {}));
 
   // custom pane
   $('customColor').value = settings.custom;
-  if (document.activeElement !== $('customHex')) $('customHex').value = settings.custom;
   const pre = $('presetSwatches');
   pre.innerHTML = '';
   PRESETS.forEach((hex) => pre.appendChild(swatch(hex, hex === settings.custom.toLowerCase(), () => saveSettings({ custom: hex }))));
@@ -386,11 +379,6 @@ function setupSettings() {
   $('imgFile').addEventListener('change', () => { if ($('imgFile').files[0]) loadImageFile($('imgFile').files[0]); });
 
   $('customColor').addEventListener('input', () => saveSettings({ custom: $('customColor').value }));
-  $('customHex').addEventListener('input', () => {
-    let v = $('customHex').value.trim();
-    if (!v.startsWith('#')) v = '#' + v;
-    if (/^#[0-9a-f]{6}$/i.test(v)) saveSettings({ custom: v.toLowerCase() });
-  });
   const eyedrop = $('eyedrop');
   if (!('EyeDropper' in window)) eyedrop.hidden = true;
   eyedrop.addEventListener('click', async () => {
@@ -400,12 +388,6 @@ function setupSettings() {
     } catch (e) { /* cancelled */ }
   });
 
-  $('copySeed').addEventListener('click', async () => {
-    const hex = state.palette ? state.palette.seed : settings.custom;
-    await navigator.clipboard.writeText(hex);
-    $('copySeed').textContent = 'Copied ' + hex;
-    setTimeout(() => { $('copySeed').textContent = 'Copy colour'; }, 1800);
-  });
 
   darkQuery.addEventListener('change', applyPalette);
 }
