@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" data-scheme="dark">
+<head>
+<meta charset="UTF-8">
+<title>New Tab</title>
+<script src="boot.js"></script>
+<link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="clock-block">
+        <div class="clock-digital">
+          <span class="h" id="clockH">00</span><span class="sep">:</span><span class="ms" id="clockM">00</span><span class="sep">:</span><span class="ms" id="clockS">00</span>
+        </div>
+        <div class="clock-date" id="clockDate"></div>
+      </div>
+    </div>
+  </main>
+
+  <button class="gear" id="gear" title="Colours" aria-label="Colour settings">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01a1.5 1.5 0 0 1 1.12-2.49H16a5 5 0 0 0 5-5C21 6.58 16.97 3 12 3Zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg>
+  </button>
+
+  <aside class="settings" id="settings" hidden>
+    <header class="settings-head">
+      <h2>Colours</h2>
+      <button class="close" id="settingsClose" aria-label="Close">×</button>
+    </header>
+
+    <div class="seg" id="sourceSeg" role="tablist">
+      <button data-source="wallpaper">Wallpaper</button>
+      <button data-source="custom">Custom</button>
+      <button data-source="image">Image</button>
+    </div>
+
+    <section data-pane="wallpaper">
+      <div class="preview" id="wpPreviewWrap">
+        <canvas id="wpCanvas"></canvas>
+        <div class="preview-empty" id="wpEmpty">No wallpaper yet</div>
+      </div>
+      <p class="hint" id="wpStatus"></p>
+      <div class="label">From your wallpaper <span class="sub">(or click the picture to pick any spot)</span></div>
+      <div class="swatches" id="wpSwatches"></div>
+    </section>
+
+    <section data-pane="custom">
+      <div class="custom-row">
+        <input type="color" id="customColor">
+        <input type="text" id="customHex" maxlength="7" spellcheck="false">
+        <button class="btn" id="eyedrop" title="Pick a colour from anywhere on screen">Pick from screen</button>
+      </div>
+      <div class="label">Presets</div>
+      <div class="swatches" id="presetSwatches"></div>
+    </section>
+
+    <section data-pane="image">
+      <div class="preview" id="imgPreviewWrap">
+        <canvas id="imgCanvas"></canvas>
+        <div class="preview-empty" id="imgEmpty">Choose a picture</div>
+      </div>
+      <label class="btn file-btn">Choose picture…<input type="file" id="imgFile" accept="image/*" hidden></label>
+      <div class="label">From this picture <span class="sub">(or click it to pick any spot)</span></div>
+      <div class="swatches" id="imgSwatches"></div>
+    </section>
+
+    <div class="field">
+      <label for="styleSelect" class="label">Style</label>
+      <select id="styleSelect"></select>
+    </div>
+
+    <div class="field">
+      <span class="label">Mode</span>
+      <div class="seg small" id="modeSeg">
+        <button data-mode="dark">Dark</button>
+        <button data-mode="light">Light</button>
+        <button data-mode="system">System</button>
+      </div>
+    </div>
+
+    <div class="field helium">
+      <label class="check"><input type="checkbox" id="heliumSync"> Match Helium's toolbar colour</label>
+      <p class="hint" id="heliumHint">Helium only reads its colour at start-up, so a change lands the next time you close it. Or:</p>
+      <button class="btn primary" id="heliumNow">Apply now (then quit Helium once)</button>
+    </div>
+
+    <p class="hint seed-line">Seed <span class="chip" id="seedChip"></span> <code id="seedHex"></code></p>
+  </aside>
+
+  <div class="dock" id="dock"></div>
+
+  <div class="add-panel" id="addPanel" hidden>
+    <div class="add-card">
+      <input id="addName" type="text" placeholder="Name" autocomplete="off" maxlength="24">
+      <input id="addUrl" type="text" placeholder="URL" autocomplete="off">
+      <div class="add-actions">
+        <button id="addCancel">Cancel</button>
+        <button id="addSave">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="newtab.js"></script>
+</body>
+</html>
