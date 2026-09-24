@@ -8,7 +8,7 @@ port comes with its own:
   as well as the ordinary Windows desktop picture. Change the wallpaper and every open New Tab recolours within a couple
   of seconds.
 - **Built-in colour picker.** Choose any of the colours pulled from the wallpaper, or click anywhere on the wallpaper
-  preview to use that exact spot. You can also pick a custom colour (colour wheel, hex, presets, or *Pick from screen*,
+  preview to use that exact spot. You can also pick a custom colour (colour wheel, presets, or *Pick from screen*,
   which samples anything on your screen), or upload any picture.
 - **Same colour science as matugen**: Google's
   [material-color-utilities](https://github.com/material-foundation/material-color-utilities), with every Material
