@@ -2,6 +2,7 @@
 // each site's own app icon, and the styles that draw either of them.
 
 export const ICON_STYLES = [
+  { id: 'ios', label: 'iOS 26 dark', hint: 'Dark glass tiles, logos in colour' },
   { id: 'site', label: 'Site icons', hint: 'Each site’s own app icon' },
   { id: 'brand', label: 'Brand colour', hint: 'Logo on its brand colour' },
   { id: 'themed', label: 'Themed', hint: 'Tinted to match your colours' },
@@ -92,11 +93,17 @@ const CURATED_ICONS = {
   youtube: 'icons/apps/youtube.png',
 };
 
-function siteIconCandidates(pageUrl) {
+function curatedIcon(pageUrl) {
   const host = new URL(pageUrl).hostname;
   for (const [keyword, path] of Object.entries(CURATED_ICONS)) {
-    if (host.includes(keyword)) return [chrome.runtime.getURL(path)];
+    if (host.includes(keyword)) return chrome.runtime.getURL(path);
   }
+  return null;
+}
+
+function siteIconCandidates(pageUrl) {
+  const curated = curatedIcon(pageUrl);
+  if (curated) return [curated];
   // apple-touch-icon is the closest thing to a standard square "app icon".
   const origin = new URL(pageUrl).origin;
   return [`${origin}/apple-touch-icon.png`, `${origin}/apple-touch-icon-precomposed.png`, `${origin}/favicon.ico`];
@@ -146,15 +153,72 @@ function luminance(hex) {
   return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
 }
 
-function glyphSvg(path) {
+let gradientId = 0;
+
+// `fill` is either nothing (inherit currentColor) or [top, bottom] colours for a
+// soft top-lit gradient, the way iOS 26 renders logos.
+function glyphSvg(path, fill) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('aria-hidden', 'true');
   const p = document.createElementNS(ns, 'path');
   p.setAttribute('d', path);
+  if (fill) {
+    const id = 'qtg' + (++gradientId);
+    const grad = document.createElementNS(ns, 'linearGradient');
+    grad.setAttribute('id', id);
+    grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
+    grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
+    fill.forEach((color, i) => {
+      const stop = document.createElementNS(ns, 'stop');
+      stop.setAttribute('offset', String(i));
+      stop.setAttribute('stop-color', color);
+      grad.appendChild(stop);
+    });
+    const defs = document.createElementNS(ns, 'defs');
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+    p.setAttribute('fill', `url(#${id})`);
+  }
   svg.appendChild(p);
   return svg;
+}
+
+function mixWithWhite(hex, amount) {
+  const n = parseInt(hex, 16);
+  const ch = (v) => Math.round(v + (255 - v) * amount).toString(16).padStart(2, '0');
+  return '#' + ch((n >> 16) & 255) + ch((n >> 8) & 255) + ch(n & 255);
+}
+
+// iOS 26 dark mode: the logo in its own colour on a dark glass tile. Logos too
+// dark to read there (GitHub, X, Wikipedia...) turn light, as iOS does.
+function drawIos(tile, link, glyph, letter) {
+  const curated = curatedIcon(link.url);
+  if (curated && (!glyph || ['whatsapp', 'youtube'].includes(glyph[0]))) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.className = 'ios-art';
+    img.src = curated;
+    tile.appendChild(img);
+    return;
+  }
+  if (glyph) {
+    let hex = glyph[2];
+    if (luminance(hex) < 0.06) hex = 'f2f2f7';
+    tile.appendChild(glyphSvg(glyph[3], [mixWithWhite(hex, 0.28), '#' + hex]));
+    return;
+  }
+  // No library logo: the site's own icon, inset on the same dark tile.
+  const l = letter();
+  siteIcon(link.url).then((src) => {
+    if (!src) return;
+    const img = document.createElement('img');
+    img.alt = '';
+    img.className = 'ios-inset';
+    img.onload = () => { l.remove(); tile.appendChild(img); };
+    img.src = src;
+  });
 }
 
 // Draw one shortcut's icon into `tile` (which is sized and rounded by CSS).
@@ -184,6 +248,7 @@ export function drawIcon(tile, link, style) {
     });
   };
 
+  if (style === 'ios') { drawIos(tile, link, glyph, letter); return; }
   if (style === 'site' || (!glyph && style === 'brand')) { site(); return; }
 
   if (glyph) {

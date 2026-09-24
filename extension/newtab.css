@@ -143,6 +143,21 @@ main {
 .style-themed { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); color: var(--primary); }
 .style-accent { background: var(--primary); color: var(--on-primary); }
 .style-mono { background: var(--surface-variant); color: var(--on-surface); }
+/* iOS 26 dark: charcoal glass with a top sheen and a thin light rim. */
+.style-ios {
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.14), transparent 60%),
+    linear-gradient(180deg, #3a3a3c 0%, #232325 48%, #151516 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+  color: #f2f2f7;
+}
+.style-ios svg { width: 60%; height: 60%; filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.5)); }
+.style-ios img.ios-art { width: 100%; height: 100%; object-fit: cover; }
+.style-ios img.ios-inset { width: 58%; height: 58%; object-fit: contain; border-radius: 22%; }
+.dock-item.icon-ios { background: transparent; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); }
 .style-glyph { background: transparent; color: var(--brand, var(--primary)); }
 .style-glyph svg { width: 68%; height: 68%; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); }
 [data-scheme="dark"] .style-glyph.brand-dark,

@@ -245,6 +245,14 @@ const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 let settings = { ...DEFAULT_SETTINGS };
 let state = {};
 
+// Saved settings carry every field, including an icon style the user never
+// picked; only a style they chose themselves survives a change of default.
+function withDefaults(saved) {
+  const s = { ...DEFAULT_SETTINGS, ...(saved || {}) };
+  if (!s.iconStyleChosen) s.iconStyle = DEFAULT_SETTINGS.iconStyle;
+  return s;
+}
+
 async function saveSettings(patch) {
   settings = { ...settings, ...patch };
   await chrome.storage.local.set({ settings });
@@ -391,7 +399,7 @@ async function renderIconStyles() {
       row.appendChild(item);
     }
     opt.append(head, row);
-    opt.addEventListener('click', () => saveSettings({ iconStyle: style.id }));
+    opt.addEventListener('click', () => saveSettings({ iconStyle: style.id, iconStyleChosen: true }));
     box.appendChild(opt);
   }
 }
@@ -450,7 +458,7 @@ function setupSettings() {
 
 async function loadState() {
   const got = await chrome.storage.local.get(['settings', 'palette', 'wallpaper', 'host']);
-  settings = { ...DEFAULT_SETTINGS, ...(got.settings || {}) };
+  settings = withDefaults(got.settings);
   state = got;
   applyPalette();
   renderSettings();
@@ -460,7 +468,7 @@ async function loadState() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   for (const k of ['palette', 'wallpaper', 'host']) if (changes[k]) state[k] = changes[k].newValue;
-  if (changes.settings) settings = { ...DEFAULT_SETTINGS, ...(changes.settings.newValue || {}) };
+  if (changes.settings) settings = withDefaults(changes.settings.newValue);
   if (changes.palette || changes.settings) applyPalette();
   const oldStyle = changes.settings && changes.settings.oldValue && changes.settings.oldValue.iconStyle;
   if (changes.links || (changes.settings && oldStyle !== settings.iconStyle)) render();
